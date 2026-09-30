@@ -1,7 +1,5 @@
 ##      
-
 The project about currency API uses Golang.
-
 ### This project about currency API.
 
 - Create a REST API service (/currencies(GET)).
