@@ -12,21 +12,28 @@ type Provider struct {
 	Fetch FetchFunc
 }
 
+func GetProviders() []Provider {
+	return []Provider{
+		{Name: "European Central Bank", Fetch: FetchEuropeanCentraBankRates},
+		{Name: "Banca d'Italia", Fetch: FetchBancaDItaliaRates},
+	}
+}
+
 func FetchAllCurrencies() []models.CurrencyResponse {
-	providers := []Provider{{Name: "europeanCentralBankURL", Fetch: FetchEuropeanCentraBankRates}}
+	registeredProviders := GetProviders()
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allCurrencies []models.CurrencyResponse
 
-	for _, p := range providers {
+	for _, p := range registeredProviders {
 		wg.Add(1)
 
 		go func(provider Provider) {
 			defer wg.Done()
 			rates, err := provider.Fetch()
 			if err != nil {
-				log.Printf("Error fetching : %v", provider.Name)
+				log.Printf("[Error] Failed fetching from %s: %v", provider.Name, err)
 				return
 			}
 			mu.Lock()
