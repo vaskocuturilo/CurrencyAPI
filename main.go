@@ -20,7 +20,7 @@ func main() {
 
 	currencyHandler := handlers.NewCurrencyHandler(cachedCurrencies)
 
-	http.HandleFunc("/currencies", currencyHandler.GetCurrencies)
+	http.HandleFunc("/currencies", handlers.CORSMiddleware(currencyHandler.GetCurrencies))
 
 	port := ":8080"
 	log.Printf("Microservice running on http://localhost%s/currencies", port)
