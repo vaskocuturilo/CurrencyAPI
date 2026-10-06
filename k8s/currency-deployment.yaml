@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currency-service-deployment
+spec:
+  selector:
+    matchLabels:
+      app: currency
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: currency
+    spec:
+      containers:
+        - name: currency
+          image: docker.hub/currency-service
+          env:
+            - name: CURRENCY_SERVICE_URL
+              value: "http://currency-service.default:8080"
+            - name: SERVER_PORT
+              value: '8091'
