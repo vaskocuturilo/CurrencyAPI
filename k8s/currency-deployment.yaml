@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: currency
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -14,9 +14,9 @@ spec:
     spec:
       containers:
         - name: currency
-          image: docker.hub/currency-service
-          env:
-            - name: CURRENCY_SERVICE_URL
-              value: "http://currency-service.default:8080"
-            - name: SERVER_PORT
-              value: '8091'
+          image: vaskocuturilo/currency-service
+          resources:
+            requests:
+              memory: 100Mi
+          ports:
+            - containerPort: 8080
