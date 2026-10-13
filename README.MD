@@ -1,8 +1,12 @@
 ##      
-The project about currency API uses Golang.
+The project about the currency API uses Go.
 ### This project is about a currency API.
 
 - Create a REST API service (/currencies(GET)).
+- Create a filter by currency.
+- Add storage like PostgreSQL.
+- Add Cache like Redis.
+- Add observability.
 - Add a Dockerfile.
 - Add Docker Compose.
 - Add unit(repository, service and rest) and integration tests with testcontainers.
@@ -17,8 +21,8 @@ You will need the following technologies available to try it out:
 * Docker Compose
 * IDE of your choice
 
-### How to run via Golang.
+### How to run via Go.
 
 ``` go run .```
-
+or in Docker:
 ``` docker compose up --detach ```
