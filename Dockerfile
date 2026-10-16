@@ -14,6 +14,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o main .
 ## Package stage
 FROM alpine:3.23.3
 
+ENV TZ=Europe/Warsaw
+
 # Install root CA certificates for outbound HTTPS calls to bank APIs
 RUN apk --no-cache add ca-certificates tzdata
 
