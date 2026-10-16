@@ -22,6 +22,9 @@ services:
     networks:
       - app-network
 
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
   redis:
     image: redis:latest
     ports:
@@ -149,6 +152,26 @@ services:
 
     networks:
       - app-network
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    restart: always
+    command:
+      - "--interval=14400" # Check for updates every 4 hours
+      - "--label-enable"
+      - "--rolling-restart"
+      - "--cleanup"
+    volumes:
+      - ~/.docker/config.watchtower.json:/config/config.json:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_CONFIG=/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
 
 networks:
   app-network:
