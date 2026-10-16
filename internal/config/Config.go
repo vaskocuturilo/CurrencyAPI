@@ -19,7 +19,7 @@ func Load() *Config {
 
 	return &Config{
 		Schedule: ScheduleConfig{
-			Time: getEnv("SCHEDULE_TIME", "* */45 * * * *"),
+			Time: getEnv("SCHEDULE_TIME", "0 0 * * * *"),
 		},
 	}
 }
