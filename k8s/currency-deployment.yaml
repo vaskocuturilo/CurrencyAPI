@@ -1,22 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: currency-service-deployment
+  name: currency-service
 spec:
+  replicas: 2 # Run 2 instances for high availability even on one VPS
   selector:
     matchLabels:
-      app: currency
-  replicas: 3
+      app: currency-service
   template:
     metadata:
       labels:
-        app: currency
+        app: currency-service
     spec:
       containers:
-        - name: currency
-          image: vaskocuturilo/currency-service
-          resources:
-            requests:
-              memory: 100Mi
+        - name: currency-service
+          image: vaskocturilo/currency-service:latest
           ports:
             - containerPort: 8080
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "64Mi"

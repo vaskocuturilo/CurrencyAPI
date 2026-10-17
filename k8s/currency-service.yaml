@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: currency-service
 spec:
-  selector:
-    app: currency
   type: NodePort
+  selector:
+    app: currency-service
   ports:
-    - protocol: "TCP"
+    - protocol: TCP
       port: 8080
       targetPort: 8080
+      nodePort: 30080
