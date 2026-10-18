@@ -1,5 +1,5 @@
 ##      
-The project about the currency API uses Go.
+The currency API project uses Go.
 ### This project is about a currency API.
 
 - Create a REST API service (/currencies(GET)).
