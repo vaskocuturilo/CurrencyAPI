@@ -16,6 +16,7 @@ func GetProviders() []Provider {
 	return []Provider{
 		{Name: "European Central Bank", Fetch: FetchEuropeanCentraBankRates},
 		{Name: "Banca d'Italia", Fetch: FetchBancaDItaliaRates},
+		{Name: "Banca Națională a României", Fetch: FetchBancaNationalRomaniaRates},
 	}
 }
 
