@@ -20,11 +20,11 @@ You will need the following technologies available to try it out:
 * IDE of your choice
 
 ## Coverage 
-The existing /v1/currencies returns all currencies as of the current date. 
-The existing /v1/currencies?scope=currency returns the exchange rate for the current date (It is necessary to use the currency encoding according to [ISO 4217](https://www.iban.com/currency-codes)
-The existing /v1/currencies?scope=all catalogue covers eligible daily sources plus pegged currencies. 
-While /v1/currencies?providers=BIS describes that provider's recognized currencies. 
-Those currency dates, and the dates in /v2/providers, describe publication coverage. 
+- The existing /v1/currencies returns all currencies as of the current date. 
+- The existing /v1/currencies?scope=currency returns the exchange rate for the current date (It is necessary to use the currency encoding according to [ISO 4217](https://www.iban.com/currency-codes)
+- The existing /v1/currencies?scope=all catalogue covers eligible daily sources plus pegged currencies. 
+- While /v1/currencies?providers=BIS describes that provider's recognized currencies. 
+- Those currency dates, and the dates in /v2/providers, describe publication coverage. 
 
 ## Deployment
 
