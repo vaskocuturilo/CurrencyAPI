@@ -1,7 +1,8 @@
 Currency API is a free, open-source exchange rate API for 180 currencies from 2 central banks and official sources. Rates are updated daily.
 
-### Banca d'Italia BDI (1999–present)
-### European Central Bank ECB (1999–present)
+### Providers (Banks):
+  - Banca d'Italia BDI (1999–present)
+  - European Central Bank ECB (1999–present)
 
 ## Coverage 
 
