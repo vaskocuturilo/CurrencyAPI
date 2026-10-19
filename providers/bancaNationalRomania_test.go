@@ -28,7 +28,12 @@ func TestFetchBNRRates(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/xml")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockXML))
+		write, err := w.Write([]byte(mockXML))
+
+		if err != nil {
+			t.Fatalf("the write contains = %v, issue of mock %v", write, err)
+			return
+		}
 	}))
 	defer server.Close()
 
