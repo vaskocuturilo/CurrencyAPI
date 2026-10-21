@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 func TestCurrencyHandler_UpdateCache(t *testing.T) {
@@ -18,12 +20,18 @@ func TestCurrencyHandler_UpdateCache(t *testing.T) {
 		{Date: "2026-10-05", Base: "EUR", Quote: "GBP", Rate: 0.85},
 	}
 
+	gin.SetMode(gin.TestMode)
+
 	handler.UpdateCache(newCache)
 
 	req := httptest.NewRequest(http.MethodGet, "/currencies", nil)
 	rec := httptest.NewRecorder()
 
-	handler.GetCurrencies(rec, req)
+	c, _ := gin.CreateTestContext(rec)
+
+	c.Request = req
+
+	handler.GetCurrencies(c)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
