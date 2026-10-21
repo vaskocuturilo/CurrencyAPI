@@ -8,10 +8,16 @@ import (
 
 type Config struct {
 	Schedule ScheduleConfig
+	Server   ServerConfig
 }
 
 type ScheduleConfig struct {
 	Time string
+}
+
+type ServerConfig struct {
+	Host string
+	Port string
 }
 
 func Load() *Config {
@@ -20,6 +26,10 @@ func Load() *Config {
 	return &Config{
 		Schedule: ScheduleConfig{
 			Time: getEnv("SCHEDULE_TIME", "0 0 * * * *"),
+		},
+		Server: ServerConfig{
+			Host: getEnv("SERVER_HOST", "0.0.0.0"),
+			Port: getEnv("SERVER_PORT", "8080"),
 		},
 	}
 }

@@ -2,10 +2,12 @@ services:
   api:
     image: vaskocuturilo/currency-service
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT}:${SERVER_PORT}"
     restart: unless-stopped
     environment:
       LOG_PATH: /usr/app/logs/application.log
+      SERVER_PORT: ${SERVER_PORT}
+      SERVER_HOST: "0.0.0.0"
     volumes:
       - logs:/usr/app/logs
     healthcheck:

@@ -1,18 +1,20 @@
 package handlers
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
-func CORSMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+func CORSMiddleware(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
+		if c.Request.Method == "http.MethodOptions" || c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
 			return
 		}
 
-		next(w, r)
+		next(c)
 	}
 }

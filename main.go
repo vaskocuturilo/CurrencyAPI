@@ -3,28 +3,32 @@ package main
 import (
 	"CurrencyAPI/cron"
 	"CurrencyAPI/handlers"
+	"CurrencyAPI/internal/config"
 	"CurrencyAPI/jobs"
 	"CurrencyAPI/providers"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	log.Println("Fetching initial daily exchange rates ...")
+	slog.Info("Fetching initial daily exchange rates ...")
 
 	initialRates := providers.FetchAllCurrencies()
 
 	if len(initialRates) == 0 {
-		log.Fatalf("Initialization error: Failed to load rates from banks")
+		slog.Warn("Initialization error: Failed to load rates from banks")
 	}
 
-	log.Printf("Successfully loaded %d total currency entries into cache", len(initialRates))
+	slog.Info("Successfully loaded total currency entries into cache", "total currency", len(initialRates))
 
 	currencyHandler := handlers.NewCurrencyHandler(initialRates)
 
@@ -37,21 +41,25 @@ func main() {
 
 	go jobManager.StartScheduler()
 
-	http.HandleFunc("/currencies", handlers.CORSMiddleware(currencyHandler.GetCurrencies))
+	r := gin.Default()
 
-	port := ":8080"
+	api := r.Group("/api/v1")
 
-	server := &http.Server{Addr: port}
+	api.GET("/currencies", handlers.CORSMiddleware(currencyHandler.GetCurrencies))
+
+	cfg := config.Load()
+
+	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
 	go func() {
-		log.Printf("Microservice running on http://localhost%s/currencies", port)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Server failed: %v", err)
+		slog.Info("Server is starting on port", "port", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Warn("Listen error", "error", err)
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("Shutting down gracefully ...")
+	slog.Info("Shutting down gracefully ...")
 
 	jobManager.Stop()
 
@@ -59,9 +67,9 @@ func main() {
 
 	defer shutdownCancel()
 
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Info("Server shutdown error", "error", err)
 	}
 
-	log.Println("Server stopped successfully.")
+	slog.Info("Server stopped successfully.")
 }
