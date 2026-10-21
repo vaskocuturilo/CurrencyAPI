@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"CurrencyAPI/models"
-	"encoding/json"
-	"log"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CurrencyHandler struct {
@@ -23,17 +23,10 @@ func (h *CurrencyHandler) UpdateCache(newCache []models.CurrencyResponse) {
 	h.Cache = newCache
 }
 
-func (h *CurrencyHandler) GetCurrencies(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func (h *CurrencyHandler) GetCurrencies(c *gin.Context) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(h.Cache); err != nil {
-		log.Println("Failed to encode JSON")
-		return
-	}
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, h.Cache)
 }
