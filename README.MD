@@ -25,3 +25,15 @@ The quickest way to get started:
 docker run -d --init -p 8080:8080 vaskocuturilo/currency-service
 ```
 
+## How it works:
+
+        [  Bank Feeds ]
+              │ (Daily Cron Job)
+              ▼
+    [ Database / Memory Cache ] 
+              │
+              ▼
+     [ REST API (Go) ]
+              │
+              ▼
+        [ Response ]
