@@ -25,7 +25,7 @@ func Load() *Config {
 
 	return &Config{
 		Schedule: ScheduleConfig{
-			Time: getEnv("SCHEDULE_TIME", "0 0 * * * *"),
+			Time: getEnv("SCHEDULE_TIME", "0 59 7,15,23 * * *"),
 		},
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
