@@ -1,4 +1,31 @@
 services:
+  postgres:
+    image: postgres:18-alpine3.24
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    networks:
+      - app-network
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    env_file:
+      - .env
   api:
     image: vaskocuturilo/currency-service
     ports:
@@ -11,7 +38,7 @@ services:
     volumes:
       - logs:/usr/app/logs
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/currencies" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${SERVER_PORT}/currencies" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -181,6 +208,8 @@ networks:
 
 volumes:
   logs:
+    driver: local
+  pgdata:
     driver: local
   redis-insight:
   loki_data:

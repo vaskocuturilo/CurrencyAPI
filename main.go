@@ -5,8 +5,10 @@ import (
 	"CurrencyAPI/handlers"
 	"CurrencyAPI/internal/config"
 	"CurrencyAPI/jobs"
+	"CurrencyAPI/migrations"
 	"CurrencyAPI/providers"
 	"context"
+	"database/sql"
 	"errors"
 	"log/slog"
 	"net"
@@ -20,6 +22,35 @@ import (
 )
 
 func main() {
+	cfg := config.Load()
+
+	db, err := sql.Open("postgres", cfg.Postgres.ConnString())
+
+	if err != nil {
+		slog.Error("Failed to init Postgres: ", "error", err)
+		os.Exit(1)
+	}
+
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.DBTimeout)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		slog.Error("Postgres is not ready: ", "error", err)
+		os.Exit(1)
+	} else {
+		slog.Info("Postgres is ready")
+	}
+
+	err = migrations.RunMigrations(db)
+
+	if err != nil {
+		slog.Error("Failed to init migration process: ", "error", err)
+		os.Exit(1)
+	} else {
+		slog.Info("Successfully init migration process")
+	}
+
 	slog.Info("Fetching initial daily exchange rates ...")
 
 	initialRates := providers.FetchAllCurrencies()
@@ -32,10 +63,10 @@ func main() {
 
 	currencyHandler := handlers.NewCurrencyHandler(initialRates)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
+	ctxSignal, cancelSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancelSignal()
 
-	jobManager := cron.NewJobManager(ctx)
+	jobManager := cron.NewJobManager(ctxSignal)
 
 	jobManager.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler))
 
@@ -47,8 +78,6 @@ func main() {
 
 	api.GET("/currencies", handlers.CORSMiddleware(currencyHandler.GetCurrencies))
 
-	cfg := config.Load()
-
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
 	go func() {
@@ -58,7 +87,7 @@ func main() {
 		}
 	}()
 
-	<-ctx.Done()
+	<-ctxSignal.Done()
 	slog.Info("Shutting down gracefully ...")
 
 	jobManager.Stop()
