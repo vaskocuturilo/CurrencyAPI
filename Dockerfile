@@ -16,6 +16,8 @@ FROM alpine:3.23.3
 
 ENV TZ=Europe/Warsaw
 
+ENV GIN_MODE=release
+
 # Install root CA certificates for outbound HTTPS calls to bank APIs
 RUN apk --no-cache add ca-certificates tzdata
 
