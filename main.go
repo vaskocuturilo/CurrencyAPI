@@ -72,13 +72,15 @@ func main() {
 
 	go jobManager.StartScheduler()
 
-	r := gin.Default()
+	router := gin.Default()
 
-	api := r.Group("/api/v1")
+	api := router.Group("/api/v1")
 
-	api.GET("/currencies", handlers.CORSMiddleware(currencyHandler.GetCurrencies))
+	router.Use(handlers.CORSMiddleware())
 
-	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
+	api.GET("/currencies", currencyHandler.GetCurrencies)
+
+	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: router}
 
 	go func() {
 		slog.Info("Server is starting on port", "port", cfg.Server.Port)
