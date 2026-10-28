@@ -47,9 +47,9 @@ func main() {
 	if err != nil {
 		slog.Error("Failed to init migration process: ", "error", err)
 		os.Exit(1)
-	} else {
-		slog.Info("Successfully init migration process")
 	}
+
+	slog.Info("Successfully init migration process")
 
 	slog.Info("Fetching initial daily exchange rates ...")
 

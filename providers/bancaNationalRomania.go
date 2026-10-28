@@ -4,6 +4,7 @@ import (
 	"CurrencyAPI/models"
 	"encoding/xml"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 )
@@ -49,19 +50,24 @@ func FetchBancaNationalRomaniaRates() ([]models.CurrencyResponse, error) {
 	var dataSet BNRDataSet
 
 	if err := xml.Unmarshal(body, &dataSet); err != nil {
+		slog.Error("Failed to parse Banca Națională a României XML payload", "error", err)
+
 		return nil, fmt.Errorf("failed to parse banca national romania XML: %w", err)
 	}
-	var currencies []models.CurrencyResponse
-
 	date := dataSet.Body.Cube.Date
 	if date == "" {
 		date = dataSet.Header.PublishingDate
 	}
 
+	var currencies []models.CurrencyResponse
+	parseErrors := 0
+
 	for _, r := range dataSet.Body.Cube.Rates {
 		valStr := strings.TrimSpace(r.Value)
 		val, err := strconv.ParseFloat(valStr, 64)
 		if err != nil {
+			parseErrors++
+			slog.Debug("Skipping malformed rate entry from BNR", "currency", r.Currency, "value", valStr, "error", err)
 			continue
 		}
 
@@ -76,6 +82,10 @@ func FetchBancaNationalRomaniaRates() ([]models.CurrencyResponse, error) {
 			Quote: r.Currency,
 			Rate:  rate,
 		})
+	}
+
+	if parseErrors > 0 {
+		slog.Warn("Encountered unparseable rates while processing BNR data", "skipped_count", parseErrors)
 	}
 
 	return currencies, err
