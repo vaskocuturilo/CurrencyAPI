@@ -13,11 +13,38 @@ jobs:
       run:
         working-directory: .
 
+    services:
+      postgres:
+        image: postgres:17
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     strategy:
       matrix:
         go-version: [ '1.26.x' ]
 
     steps:
+      - name: 🚀 Wait for Postgres to be ready
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U postgres; then
+              echo "Postgres is up!";
+              break;
+            fi
+            echo "Waiting for Postgres...";
+            sleep 1;
+          done
+
       - uses: actions/checkout@v5
       - name: Setup Go 🚀
         uses: actions/setup-go@v5
@@ -32,6 +59,8 @@ jobs:
 
       - name: Test with Go 🧪
         run: go test -v ./... -json > TestResults-${{ matrix.go-version }}.json
+        env:
+          TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
 
       - name: Upload Go test results 🧐
         uses: actions/upload-artifact@v4
