@@ -60,7 +60,7 @@ jobs:
       - name: Test with Go 🧪
         run: go test -v ./... -json > TestResults-${{ matrix.go-version }}.json
         env:
-          POSTGRES_USER: ${{ secrets.TEST_DB_URL }}
+          TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
 
       - name: Upload Go test results 🧐
         uses: actions/upload-artifact@v4
