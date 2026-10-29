@@ -74,9 +74,9 @@ func main() {
 
 	router := gin.Default()
 
-	api := router.Group("/api/v1")
-
 	router.Use(handlers.CORSMiddleware())
+
+	api := router.Group("/api/v1")
 
 	api.GET("/currencies", currencyHandler.GetCurrencies)
 
