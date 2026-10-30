@@ -76,6 +76,10 @@ func main() {
 
 	router.Use(handlers.CORSMiddleware())
 
+	router.GET("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
 	api := router.Group("/api/v1")
 
 	api.GET("/currencies", currencyHandler.GetCurrencies)
