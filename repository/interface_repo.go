@@ -6,6 +6,6 @@ import (
 )
 
 type CurrencyRepository interface {
-	Get(ctx context.Context, currency string) (*models.CurrencyResponse, error)
+	Get(ctx context.Context, id string) (*models.CurrencyResponse, error)
 	GetAll(ctx context.Context) ([]*models.CurrencyResponse, error)
 }

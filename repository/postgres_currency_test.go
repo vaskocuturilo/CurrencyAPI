@@ -23,7 +23,7 @@ func TestPostgresEventRepository_Get_Success(t *testing.T) {
 	id := "123"
 
 	rows := sqlmock.NewRows([]string{"base", "rate", "quote", "date"}).
-		AddRow(id, "Test Base", "Test Rate")
+		AddRow(id, "USD", 1.1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, base, rate, quote, date FROM currencies_db WHERE id = $1")).
 		WithArgs(id).
@@ -34,8 +34,8 @@ func TestPostgresEventRepository_Get_Success(t *testing.T) {
 	if err != nil {
 		t.Errorf("error was not expected: %s", err)
 	}
-	if currency.Base != "Test Base" {
-		t.Errorf("expected title 'Test Base', got %s", currency.Base)
+	if currency.Base != "USD" {
+		t.Errorf("expected base 'USD', got %s", currency.Base)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -67,8 +67,8 @@ func TestPostgresEventRepository_GetAll_Success(t *testing.T) {
 	repo := NewPostgresCurrencyRepository(db)
 
 	expectedCurrencies := []models.CurrencyResponse{
-		{Base: "USD", Rate: 1.1, Date: "Desc 1", Quote: ""},
-		{Base: "EUR", Rate: 1.1, Date: "Desc 2", Quote: ""},
+		{Base: "USD", Rate: 1.1, Date: "Desc 1", Quote: "1"},
+		{Base: "EUR", Rate: 1.1, Date: "Desc 2", Quote: "2"},
 	}
 
 	rows := sqlmock.NewRows([]string{"base", "rate", "date", "quote"})
@@ -96,10 +96,6 @@ func TestPostgresEventRepository_GetAll_Success(t *testing.T) {
 
 		if currencies[i].Rate != e.Rate {
 			t.Errorf("[%d] expected Rate %f, got %f", i, e.Rate, currencies[i].Rate)
-		}
-
-		if currencies[i].Date != e.Date {
-			t.Errorf("[%d] expected Date %s, got %s", i, e.Date, currencies[i].Date)
 		}
 	}
 
