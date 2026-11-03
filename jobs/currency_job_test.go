@@ -7,7 +7,8 @@ import (
 
 func TestCurrencyUpdateJob_Contract(t *testing.T) {
 	handler := handlers.NewCurrencyHandler(nil)
-	job := NewCurrencyUpdateJob(handler)
+
+	job := NewCurrencyUpdateJob(handler, nil)
 
 	expectedName := "Currency Update Job"
 	if job.Name() != expectedName {

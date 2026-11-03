@@ -6,7 +6,9 @@ import (
 	"CurrencyAPI/internal/config"
 	"CurrencyAPI/jobs"
 	"CurrencyAPI/migrations"
+	"CurrencyAPI/models"
 	"CurrencyAPI/providers"
+	"CurrencyAPI/repository"
 	"context"
 	"database/sql"
 	"errors"
@@ -19,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -51,15 +54,30 @@ func main() {
 
 	slog.Info("Successfully init migration process")
 
+	currencyRepo := repository.NewPostgresCurrencyRepository(db)
+
 	slog.Info("Fetching initial daily exchange rates ...")
 
-	initialRates := providers.FetchAllCurrencies()
+	fetchCtx, fetchCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer fetchCancel()
+
+	initialRates := providers.FetchAllCurrencies(fetchCtx, currencyRepo)
 
 	if len(initialRates) == 0 {
-		slog.Warn("Initialization error: Failed to load rates from banks")
+		slog.Warn("Failed to fetch rates from external APIs on startup. Attempting to load from database fallback...")
+		dbRates, dbErr := currencyRepo.GetAll(fetchCtx)
+		if dbErr == nil && len(dbRates) > 0 {
+			initialRates = make([]models.CurrencyResponse, len(dbRates))
+			for i, r := range dbRates {
+				initialRates[i] = *r
+			}
+			slog.Info("Successfully loaded rates from database fallback", "count", len(initialRates))
+		} else {
+			slog.Warn("Initialization warning: No rates available from APIs or database yet")
+		}
+	} else {
+		slog.Info("Successfully loaded and saved currency entries", "total_currencies", len(initialRates))
 	}
-
-	slog.Info("Successfully loaded total currency entries into cache", "total currency", len(initialRates))
 
 	currencyHandler := handlers.NewCurrencyHandler(initialRates)
 
@@ -68,7 +86,7 @@ func main() {
 
 	jobManager := cron.NewJobManager(ctxSignal)
 
-	jobManager.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler))
+	jobManager.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler, currencyRepo))
 
 	go jobManager.StartScheduler()
 

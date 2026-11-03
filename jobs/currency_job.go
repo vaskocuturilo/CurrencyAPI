@@ -3,6 +3,7 @@ package jobs
 import (
 	"CurrencyAPI/handlers"
 	"CurrencyAPI/internal/config"
+	"CurrencyAPI/repository"
 
 	"CurrencyAPI/providers"
 	"context"
@@ -11,10 +12,14 @@ import (
 
 type CurrencyUpdateJob struct {
 	handler *handlers.CurrencyHandler
+	repo    repository.CurrencyRepository
 }
 
-func NewCurrencyUpdateJob(handler *handlers.CurrencyHandler) *CurrencyUpdateJob {
-	return &CurrencyUpdateJob{handler: handler}
+func NewCurrencyUpdateJob(handler *handlers.CurrencyHandler, repo repository.CurrencyRepository) *CurrencyUpdateJob {
+	return &CurrencyUpdateJob{
+		handler: handler,
+		repo:    repo,
+	}
 }
 
 func (j *CurrencyUpdateJob) Name() string {
@@ -30,7 +35,7 @@ func (j *CurrencyUpdateJob) Schedule() string {
 func (j *CurrencyUpdateJob) Run(ctx context.Context) error {
 	log.Println("Running scheduled currency update job...")
 
-	newRates := providers.FetchAllCurrencies()
+	newRates := providers.FetchAllCurrencies(ctx, j.repo)
 	if len(newRates) == 0 {
 		log.Println("[Warning] Cron fetch returned 0 rates. Keeping existing cache.")
 		return nil
