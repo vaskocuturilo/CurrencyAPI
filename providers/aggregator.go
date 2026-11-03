@@ -2,6 +2,8 @@ package providers
 
 import (
 	"CurrencyAPI/models"
+	"CurrencyAPI/repository"
+	"context"
 	"log/slog"
 	"sync"
 	"time"
@@ -21,7 +23,7 @@ func GetProviders() []Provider {
 	}
 }
 
-func FetchAllCurrencies() []models.CurrencyResponse {
+func FetchAllCurrencies(ctx context.Context, repo repository.CurrencyRepository) []models.CurrencyResponse {
 	start := time.Now()
 	registeredProviders := GetProviders()
 
@@ -58,6 +60,18 @@ func FetchAllCurrencies() []models.CurrencyResponse {
 	}
 
 	wg.Wait()
+
+	if len(allCurrencies) > 0 {
+		saveStart := time.Now()
+		if err := repo.SaveAll(ctx, allCurrencies); err != nil {
+			slog.Error("Failed to persist currencies to database", "error", err)
+		} else {
+			slog.Info("Successfully persisted currencies to database",
+				"count", len(allCurrencies),
+				"latency_ms", time.Since(saveStart).Milliseconds(),
+			)
+		}
+	}
 
 	slog.Info("Completed currency aggregation across all providers",
 		"total_currencies_loaded", len(allCurrencies),
