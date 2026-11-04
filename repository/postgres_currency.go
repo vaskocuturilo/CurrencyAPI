@@ -9,7 +9,7 @@ import (
 )
 
 type CurrencyRepository interface {
-	Get(ctx context.Context, id string) (*models.CurrencyResponse, error)
+	Get(ctx context.Context, currency string) (*models.CurrencyResponse, error)
 	GetAll(ctx context.Context) ([]*models.CurrencyResponse, error)
 	SaveAll(ctx context.Context, currencies []models.CurrencyResponse) error
 }
@@ -21,19 +21,19 @@ func NewPostgresCurrencyRepository(db *sql.DB) *PostgresCurrencyRepository {
 	return &PostgresCurrencyRepository{db: db}
 }
 
-func (r *PostgresCurrencyRepository) Get(ctx context.Context, id string) (*models.CurrencyResponse, error) {
-	query := `SELECT date, base, quote,rate 
-              FROM currencies WHERE id = $1`
+func (r *PostgresCurrencyRepository) Get(ctx context.Context, currency string) (*models.CurrencyResponse, error) {
+	query := `SELECT date, base, quote,rate FROM currencies WHERE quote = $1`
 
-	currency := &models.CurrencyResponse{}
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&currency.Date, &currency.Base, &currency.Quote, &currency.Rate)
+	c := &models.CurrencyResponse{}
+
+	err := r.db.QueryRowContext(ctx, query, currency).Scan(
+		&c.Date, &c.Base, &c.Quote, &c.Rate)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, models.ErrNotFound
 	}
 
-	return currency, err
+	return c, err
 }
 
 func (r *PostgresCurrencyRepository) GetAll(ctx context.Context) ([]*models.CurrencyResponse, error) {
