@@ -3,11 +3,59 @@ package repository
 import (
 	"CurrencyAPI/models"
 	"context"
+	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
+
+func TestPostgresEventRepository_Get_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	repo := NewPostgresCurrencyRepository(db)
+
+	currency := "USD"
+
+	rows := sqlmock.NewRows([]string{"date", "base", "quote", "rate"}).
+		AddRow(currency, "2026-11-03", "USD", 1.1)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT date, base, quote,rate FROM currencies WHERE quote = $1")).
+		WithArgs(currency).
+		WillReturnRows(rows)
+
+	currencyResponse, err := repo.Get(context.Background(), currency)
+
+	if err != nil {
+		t.Errorf("error was not expected: %s", err)
+	}
+	if currencyResponse.Quote != "USD" {
+		t.Errorf("expected base 'USD', got %s", currencyResponse.Quote)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresEventRepository_Get_NotFound(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	repo := NewPostgresCurrencyRepository(db)
+
+	mock.ExpectQuery("SELECT *").WillReturnError(sql.ErrNoRows)
+
+	_, err := repo.Get(context.Background(), "unknown")
+
+	if !errors.Is(err, models.ErrNotFound) {
+		t.Errorf("expected domain.ErrNotFound, got %v", err)
+	}
+}
 
 func TestPostgresEventRepository_GetAll_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
