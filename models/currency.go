@@ -10,5 +10,6 @@ type CurrencyResponse struct {
 }
 
 var (
-	ErrNotFound = errors.New("currency not found")
+	ErrNotFound   = errors.New("currency not found")
+	InternalError = "Internal error"
 )
