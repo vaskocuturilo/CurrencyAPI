@@ -13,21 +13,25 @@ type ICurrencyService interface {
 }
 
 type CurrencyService struct {
-	repo repository.PostgresCurrencyRepository
+	repo repository.CurrencyRepository
 }
 
-func NewCurrencyService(repo repository.PostgresCurrencyRepository) *CurrencyService {
+func NewCurrencyService(repo repository.CurrencyRepository) *CurrencyService {
 	return &CurrencyService{repo: repo}
 }
 
 func (c *CurrencyService) Get(ctx context.Context, currency string) (*models.CurrencyResponse, error) {
-	return nil, nil
+	if err := models.Validate(currency); err != nil {
+		return nil, err
+	}
+
+	return c.repo.Get(ctx, currency)
 }
 
 func (c *CurrencyService) GetAll(ctx context.Context) ([]*models.CurrencyResponse, error) {
-	return nil, nil
+	return c.repo.GetAll(ctx)
 }
 
 func (c *CurrencyService) SaveAll(ctx context.Context, currencies []models.CurrencyResponse) error {
-	return nil
+	return c.repo.SaveAll(ctx, currencies)
 }
