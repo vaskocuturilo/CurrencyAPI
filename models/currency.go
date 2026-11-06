@@ -1,6 +1,9 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type CurrencyResponse struct {
 	Date  string  `json:"date"`
@@ -10,6 +13,20 @@ type CurrencyResponse struct {
 }
 
 var (
-	ErrNotFound   = errors.New("currency not found")
-	InternalError = "Internal error"
+	ErrNotFound              = errors.New("currency not found")
+	ErrCurrencyRequired      = errors.New("currency required")
+	ErrCurrencyInvalidLength = errors.New("currency code must be exactly 3 characters")
+	InternalError            = "Internal error"
 )
+
+func Validate(value string) error {
+	if strings.TrimSpace(value) == "" {
+		return ErrCurrencyRequired
+	}
+
+	if len(value) != 3 {
+		return ErrCurrencyInvalidLength
+	}
+
+	return nil
+}
