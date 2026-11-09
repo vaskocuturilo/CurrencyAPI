@@ -18,7 +18,7 @@ func NewUserController(service service.ICurrencyService) *CurrencyController {
 }
 
 func (c *CurrencyController) Get(ctx *gin.Context) {
-	currency := ctx.Param("currency")
+	currency := ctx.Query("scope")
 
 	result, err := c.service.Get(ctx.Request.Context(), currency)
 
@@ -28,8 +28,8 @@ func (c *CurrencyController) Get(ctx *gin.Context) {
 			errorResponse(ctx, http.StatusNotFound, "The currency is not found")
 		default:
 			errorResponse(ctx, http.StatusInternalServerError, models.InternalError)
-			return
 		}
+		return
 	}
 
 	ctx.JSON(http.StatusOK, models.CurrencyResponse{
@@ -60,6 +60,15 @@ func (c *CurrencyController) SaveAll(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Currencies list saved successfully"})
+}
+
+func (c *CurrencyController) Route(ctx *gin.Context) {
+	if ctx.Query("scope") != "" {
+		c.Get(ctx)
+		return
+	}
+
+	c.GetAll(ctx)
 }
 
 func errorResponse(c *gin.Context, code int, message string) {

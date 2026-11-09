@@ -1,14 +1,17 @@
 package main
 
 import (
+	"CurrencyAPI/controller"
 	"CurrencyAPI/cron"
+	"CurrencyAPI/jobs"
+
 	"CurrencyAPI/handlers"
 	"CurrencyAPI/internal/config"
-	"CurrencyAPI/jobs"
 	"CurrencyAPI/migrations"
 	"CurrencyAPI/models"
 	"CurrencyAPI/providers"
 	"CurrencyAPI/repository"
+	"CurrencyAPI/service"
 	"context"
 	"database/sql"
 	"errors"
@@ -90,6 +93,10 @@ func main() {
 
 	go jobManager.StartScheduler()
 
+	serv := service.NewCurrencyService(currencyRepo)
+
+	ctr := controller.NewUserController(serv)
+
 	router := gin.Default()
 
 	router.Use(handlers.CORSMiddleware())
@@ -100,7 +107,7 @@ func main() {
 
 	api := router.Group("/api/v1")
 
-	api.GET("/currencies", currencyHandler.GetCurrencies)
+	api.GET("/currencies", ctr.Route)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: router}
 
