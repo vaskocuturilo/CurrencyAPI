@@ -23,12 +23,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v7/limiter"
+	"github.com/didip/tollbooth_gin"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	cfg := config.Load()
+
+	rateLimiter := tollbooth.NewLimiter(20, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Second})
+	rateLimiter.SetMessage("Too many requests, try again later.")
 
 	db, err := sql.Open("postgres", cfg.Postgres.ConnString())
 
@@ -107,7 +113,7 @@ func main() {
 
 	api := router.Group("/api/v1")
 
-	api.GET("/currencies", ctr.Route)
+	api.GET("/currencies", tollbooth_gin.LimitHandler(rateLimiter), ctr.Route)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: router}
 

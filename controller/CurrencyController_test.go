@@ -7,7 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v7/limiter"
+	"github.com/didip/tollbooth_gin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -197,5 +201,41 @@ func TestCurrencyController_GetSaveAll_Table(t *testing.T) {
 				t.Errorf("Expected status %d, got %d", tc.expectedStatus, w.Code)
 			}
 		})
+	}
+}
+
+func TestCurrencyController_RateLimiter(t *testing.T) {
+	lim := tollbooth.NewLimiter(1, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Second})
+	lim.SetMessage("Too many requests, try again later.")
+
+	mockService := &MockCurrencyService{
+		GetAllFunc: func(ctx context.Context) ([]*models.CurrencyResponse, error) {
+			return []*models.CurrencyResponse{
+				{Date: "2026-11-10", Base: "USD", Quote: "EUR", Rate: 1.1},
+			}, nil
+		},
+	}
+
+	controller := NewUserController(mockService)
+
+	router := gin.New()
+	router.GET("/currencies", tollbooth_gin.LimitHandler(lim), controller.Route)
+
+	w1 := httptest.NewRecorder()
+	req1, _ := http.NewRequest("GET", "/currencies", nil)
+	req1.RemoteAddr = "192.168.1.1:1234"
+	router.ServeHTTP(w1, req1)
+
+	if w1.Code != http.StatusOK {
+		t.Errorf("Request 1: expected status 200, got %d", w1.Code)
+	}
+
+	w2 := httptest.NewRecorder()
+	req2, _ := http.NewRequest("GET", "/currencies", nil)
+	req2.RemoteAddr = "192.168.1.1:1234"
+	router.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusTooManyRequests {
+		t.Errorf("Request 2 (Rate Limit): expected status 429, got %d", w2.Code)
 	}
 }
