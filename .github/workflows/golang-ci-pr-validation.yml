@@ -45,9 +45,9 @@ jobs:
             sleep 1;
           done
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.0
       - name: Setup Go 🚀
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6.0.0
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -63,7 +63,7 @@ jobs:
           TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
 
       - name: Upload Go test results 🧐
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: Go-results-${{ matrix.go-version }}
           path: TestResults-${{ matrix.go-version }}.json
