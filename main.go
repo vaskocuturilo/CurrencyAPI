@@ -28,6 +28,7 @@ import (
 	"github.com/didip/tollbooth_gin"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -62,6 +63,24 @@ func main() {
 	}
 
 	slog.Info("Successfully init migration process")
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         cfg.Redis.Addr,
+		Password:     cfg.Redis.Password,
+		DB:           0,
+		DialTimeout:  2 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	})
+
+	ctx, cancel = context.WithTimeout(context.Background(), cfg.Server.RedisTimeout)
+	defer cancel()
+
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		slog.Warn("WARNING: Redis is not reachable, working without cache.", "error", err)
+	} else {
+		slog.Info("Successfully connected to Redis")
+	}
 
 	currencyRepo := repository.NewPostgresCurrencyRepository(db)
 
