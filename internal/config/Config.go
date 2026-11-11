@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -12,6 +13,7 @@ type Config struct {
 	Postgres PostgresConfig
 	Schedule ScheduleConfig
 	Server   ServerConfig
+	Redis    RedisConfig
 }
 
 type ScheduleConfig struct {
@@ -27,9 +29,16 @@ type PostgresConfig struct {
 }
 
 type ServerConfig struct {
-	Host      string
-	Port      string
-	DBTimeout time.Duration
+	Host         string
+	Port         string
+	DBTimeout    time.Duration
+	RedisTimeout time.Duration
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 func Load() *Config {
@@ -47,9 +56,14 @@ func Load() *Config {
 			Time: getEnv("SCHEDULE_TIME", "0 59 7,15,23 * * *"),
 		},
 		Server: ServerConfig{
-			Host:      getEnv("SERVER_HOST", "0.0.0.0"),
-			Port:      getEnv("SERVER_PORT", "8080"),
-			DBTimeout: time.Second * 5,
+			Host:         getEnv("SERVER_HOST", "0.0.0.0"),
+			Port:         getEnv("SERVER_PORT", "8080"),
+			DBTimeout:    time.Second * 5,
+			RedisTimeout: time.Second * 5,
+		},
+		Redis: RedisConfig{
+			Addr:     net.JoinHostPort(getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
+			Password: os.Getenv("REDIS_PASSWORD"),
 		},
 	}
 }
