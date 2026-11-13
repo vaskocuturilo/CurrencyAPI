@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"context"
 	"database/sql"
 	"errors"

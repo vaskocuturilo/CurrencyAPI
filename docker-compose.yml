@@ -59,9 +59,27 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
   redis:
-    image: redis:latest
+    image: redis:8-alpine3.23
+    container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - cache:/data
+
+    env_file:
+      - .env
+
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
     networks:
       - app-network
@@ -69,18 +87,26 @@ services:
     depends_on: [ api ]
 
   redis-insight:
-    image: redis/redisinsight:latest
-    restart: always
-    depends_on:
-      - redis
+    image: redis/redisinsight:2.42
+    restart: unless-stopped
     ports:
       - "5540:5540"
+
+    networks:
+      - app-network
+
+    environment:
+      - RI_ENCRYPTION_KEY=${RI_ENCRYPTION_KEY}
 
     volumes:
       - redis-insight:/data
 
-    networks:
-      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    env_file:
+      - .env
 
   prometheus:
     image: prom/prometheus:latest
@@ -186,6 +212,27 @@ services:
     networks:
       - app-network
 
+  nexus:
+    image: sonatype/nexus3:3.76.0
+    platform: linux/amd64
+    container_name: nexus
+    ports:
+      - "8081:8081"
+    environment:
+      NEXUS_SECURITY_INITIAL_PASSWORD: ${NEXUS_SECURITY_INITIAL_PASSWORD}
+      NEXUS_SECURITY_RANDOMPASSWORD: false
+    volumes:
+      - nexus-data:/nexus-data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status" ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+    networks:
+      - app-network
+
   watchtower:
     image: nickfedor/watchtower:latest
     container_name: watchtower
@@ -215,11 +262,15 @@ volumes:
     driver: local
   pgdata:
     driver: local
+  cache:
+    driver: local
   redis-insight:
+    driver: local
   loki_data:
   loki_chunks:
   loki_index:
   loki_rules:
   grafana-data:
   tempo_data:
+  nexus-data:
 

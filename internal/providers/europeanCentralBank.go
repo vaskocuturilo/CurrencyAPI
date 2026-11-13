@@ -1,7 +1,7 @@
 package providers
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"encoding/xml"
 	"fmt"
 	"log/slog"

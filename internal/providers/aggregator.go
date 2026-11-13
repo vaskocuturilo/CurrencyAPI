@@ -1,8 +1,8 @@
 package providers
 
 import (
-	"CurrencyAPI/models"
-	"CurrencyAPI/repository"
+	"CurrencyAPI/internal/models"
+	"CurrencyAPI/internal/repository"
 	"context"
 	"log/slog"
 	"sync"

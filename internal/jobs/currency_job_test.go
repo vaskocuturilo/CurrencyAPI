@@ -1,7 +1,7 @@
 package jobs
 
 import (
-	"CurrencyAPI/handlers"
+	"CurrencyAPI/internal/handlers"
 	"testing"
 )
 

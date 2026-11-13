@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"context"
 	"errors"
 	"net/http"

@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"CurrencyAPI/models"
-	"CurrencyAPI/service"
+	"CurrencyAPI/internal/models"
+	"CurrencyAPI/internal/service"
 	"errors"
 	"net/http"
 

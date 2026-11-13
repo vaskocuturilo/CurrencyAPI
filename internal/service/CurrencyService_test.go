@@ -1,7 +1,7 @@
 package service
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"context"
 	"errors"
 	"testing"

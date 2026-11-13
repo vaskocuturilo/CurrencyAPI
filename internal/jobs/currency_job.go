@@ -1,11 +1,10 @@
 package jobs
 
 import (
-	"CurrencyAPI/handlers"
 	"CurrencyAPI/internal/config"
-	"CurrencyAPI/repository"
-
-	"CurrencyAPI/providers"
+	"CurrencyAPI/internal/handlers"
+	"CurrencyAPI/internal/providers"
+	"CurrencyAPI/internal/repository"
 	"context"
 	"log"
 )
