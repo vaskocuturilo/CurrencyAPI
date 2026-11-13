@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"log/slog"
 	"net/http"
 	"sync"

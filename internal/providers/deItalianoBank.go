@@ -1,7 +1,7 @@
 package providers
 
 import (
-	"CurrencyAPI/models"
+	"CurrencyAPI/internal/models"
 	"bytes"
 	"encoding/csv"
 	"fmt"
