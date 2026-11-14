@@ -1,11 +1,12 @@
 ## Currency API
 
-Currency API is a free, open-source exchange rate API for 217 currencies from 3 central banks and official sources. Rates are updated daily.
+Currency API is a free, open-source exchange rate API for 217 currencies from 4 central banks and official sources. Rates are updated daily.
 
 ### Providers (Banks):
   - Banca d'Italia BDI (1999 – present)
   - European Central Bank ECB (1999 – present)
   - Banca Națională a României (2005 – present)
+  - Bank for International Settlements (1900–present)
 
 ## How it works (Schema):
 
