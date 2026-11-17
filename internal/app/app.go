@@ -49,15 +49,16 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 
 	rdb := newRedis(ctx, cfg)
 
-	repo := repository.NewPostgresCurrencyRepository(db)
-	initialRates := loadInitialRates(ctx, repo)
+	pgRepo := repository.NewPostgresCurrencyRepository(db)
+
+	initialRates := loadInitialRates(ctx, pgRepo)
 
 	currencyHandler := handlers.NewCurrencyHandler(initialRates)
 
 	jm := cron.NewJobManager(ctx)
-	jm.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler, repo))
+	jm.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler, pgRepo))
 
-	ctr := controller.NewUserController(service.NewCurrencyService(repo))
+	ctr := controller.NewUserController(service.NewCurrencyService(pgRepo))
 
 	return &App{
 		cfg:        cfg,
