@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: ./backend
 
     services:
       postgres:
@@ -34,6 +34,14 @@ jobs:
         go-version: [ '1.26.x' ]
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Go 🚀
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version: ${{ matrix.go-version }}
+
       - name: 🚀 Wait for Postgres to be ready
         run: |
           for i in {1..30}; do
@@ -45,14 +53,8 @@ jobs:
             sleep 1;
           done
 
-      - uses: actions/checkout@v6.0.0
-      - name: Setup Go 🚀
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version: ${{ matrix.go-version }}
-
       - name: Install dependencies 💻
-        run: go get ./...
+        run: go mod download
 
       - name: Build 👷
         run: go build -v ./...
