@@ -1,7 +1,8 @@
 package service
 
 import (
-	"CurrencyAPI/internal/models"
+	"backend/internal/models"
+	service2 "backend/internal/service"
 	"context"
 	"errors"
 	"testing"
@@ -86,7 +87,7 @@ func TestCurrencyService_Get_TableDriven(t *testing.T) {
 				},
 			}
 
-			serv := NewCurrencyService(mockRepo)
+			serv := service2.NewCurrencyService(mockRepo)
 			// Act
 			result, err := serv.Get(context.Background(), tc.inputCode)
 
@@ -155,7 +156,7 @@ func TestCurrencyService_GetAll_TableDriven(t *testing.T) {
 				},
 			}
 
-			serv := NewCurrencyService(mockRepo)
+			serv := service2.NewCurrencyService(mockRepo)
 
 			// Act
 			result, err := serv.GetAll(context.Background())
@@ -210,7 +211,7 @@ func TestCurrencyService_SaveAll_TableDriven(t *testing.T) {
 				},
 			}
 
-			serv := NewCurrencyService(mockRepo)
+			serv := service2.NewCurrencyService(mockRepo)
 
 			// Act
 			err := serv.SaveAll(context.Background(), tc.inputData)
