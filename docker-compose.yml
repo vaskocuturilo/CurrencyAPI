@@ -4,28 +4,24 @@ services:
     container_name: postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
-
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-
     volumes:
       - pgdata:/var/lib/postgresql
-
     networks:
       - app-network
-
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-
     env_file:
-      - .env
+      - backend/.env
+
   api:
     image: vaskocuturilo/currency-service:latest
     ports:
@@ -42,7 +38,7 @@ services:
     volumes:
       - logs:/usr/app/logs
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${SERVER_PORT}/health" ]
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:$$SERVER_PORT/health || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -54,7 +50,11 @@ services:
         max-file: "4"
     networks:
       - app-network
-
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -63,64 +63,51 @@ services:
     container_name: redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
-
+      - "127.0.0.1:6379:6379"
     command: redis-server /usr/local/etc/redis/redis.conf
-
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
       - cache:/data
-
     env_file:
       - .env
-
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-
     networks:
       - app-network
-
-    depends_on: [ api ]
 
   redis-insight:
     image: redis/redisinsight:2.42
     restart: unless-stopped
     ports:
-      - "5540:5540"
-
+      - "127.0.0.1:5540:5540"
     networks:
       - app-network
-
     environment:
       - RI_ENCRYPTION_KEY=${RI_ENCRYPTION_KEY}
-
     volumes:
       - redis-insight:/data
-
     depends_on:
       redis:
         condition: service_healthy
-
     env_file:
-      - .env
+      - backend/.env
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "http://localhost:9090/-/healthy" ]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy" ]
       interval: 10s
       timeout: 5s
       retries: 5
-
     networks:
       - app-network
 
@@ -128,20 +115,18 @@ services:
     image: grafana/loki:2.9.3
     container_name: loki
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "4"
-
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
       interval: 10s
       timeout: 5s
       retries: 5
-
     networks:
       - app-network
 
@@ -149,21 +134,22 @@ services:
     image: grafana/tempo:2.4.1
     container_name: tempo
     ports:
-      - "3200:3200"
-
+      - "127.0.0.1:3200:3200"
     command: [ "-config.file=/etc/tempo/tempo.yaml" ]
     volumes:
       - ./infrastructure/tempo/tempo.yaml:/etc/tempo/tempo.yaml
       - tempo_data:/var/tempo
+    networks:
+      - app-network
 
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
     user: root
     ports:
-      - "9080:9080" # HTTP interface
-      - "4317:4317" # OTLP gRPC
-      - "4318:4318" # OTLP http
+      - "127.0.0.1:9080:9080" # HTTP interface
+      - "127.0.0.1:4317:4317" # OTLP gRPC
+      - "127.0.0.1:4318:4318" # OTLP http
     volumes:
       - ./infrastructure/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
@@ -176,29 +162,27 @@ services:
       - --server.http.listen-addr=0.0.0.0:9080
       - --storage.path=/var/lib/alloy/data
       - /etc/alloy/config.alloy
+    networks:
+      - app-network
 
   grafana:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - "3000:3000"
-
+      - "127.0.0.1:3000:3000"
     environment:
-      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
       GF_METRICS_ENABLED: "true"
-
     volumes:
       - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
       - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
-
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "http://localhost:3000/api/health" ]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health" ]
       interval: 10s
       timeout: 5s
       retries: 10
-
     depends_on:
       prometheus:
         condition: service_healthy
@@ -208,28 +192,41 @@ services:
         condition: service_started
       alloy:
         condition: service_started
-
     networks:
       - app-network
 
-  nexus:
-    image: sonatype/nexus3:3.76.0
-    platform: linux/amd64
-    container_name: nexus
-    ports:
-      - "8081:8081"
-    environment:
-      NEXUS_SECURITY_INITIAL_PASSWORD: ${NEXUS_SECURITY_INITIAL_PASSWORD}
-      NEXUS_SECURITY_RANDOMPASSWORD: false
-    volumes:
-      - nexus-data:/nexus-data
+  frontend:
+    hostname: frontend-currency-converter
+    container_name: frontend-currency-converter
+    image: frontend-currency-converter
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - "80"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status" ]
-      interval: 5s
-      timeout: 10s
-      retries: 30
-      start_period: 60s
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app-network
 
+  nginx:
+    hostname: nginx-currency-converter
+    container_name: nginx-currency-converter
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx_config/nginx.conf:/etc/nginx/nginx.conf:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "4"
     networks:
       - app-network
 
@@ -238,7 +235,7 @@ services:
     container_name: watchtower
     restart: always
     command:
-      - "--interval=14400" # Check for updates every 4 hours
+      - "--interval=14400"
       - "--label-enable"
       - "--rolling-restart"
       - "--cleanup"
@@ -259,18 +256,7 @@ networks:
 
 volumes:
   logs:
-    driver: local
   pgdata:
-    driver: local
   cache:
-    driver: local
   redis-insight:
-    driver: local
-  loki_data:
-  loki_chunks:
-  loki_index:
-  loki_rules:
-  grafana-data:
   tempo_data:
-  nexus-data:
-

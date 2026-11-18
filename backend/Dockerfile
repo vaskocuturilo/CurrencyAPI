@@ -6,7 +6,7 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 
-COPY . .
+COPY .. .
 
 # Build fully static binary with CGO disabled
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o main .
