@@ -51,6 +51,8 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 
 	pgRepo := repository.NewPostgresCurrencyRepository(db)
 
+	cachedRepo := repository.NewCachedCurrencyRepository(pgRepo, rdb, 15*time.Minute)
+
 	initialRates := loadInitialRates(ctx, pgRepo)
 
 	currencyHandler := handlers.NewCurrencyHandler(initialRates)
@@ -58,7 +60,7 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	jm := cron.NewJobManager(ctx)
 	jm.RegisterJob(jobs.NewCurrencyUpdateJob(currencyHandler, pgRepo))
 
-	ctr := controller.NewUserController(service.NewCurrencyService(pgRepo))
+	ctr := controller.NewUserController(service.NewCurrencyService(cachedRepo))
 
 	return &App{
 		cfg:        cfg,
@@ -104,11 +106,15 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) Close() {
-	if err := a.db.Close(); err != nil {
-		slog.Warn("closing postgres", "error", err)
+	if a.db != nil {
+		if err := a.db.Close(); err != nil {
+			slog.Warn("closing postgres", "error", err)
+		}
 	}
-	if err := a.redis.Close(); err != nil {
-		slog.Warn("closing redis", "error", err)
+	if a.redis != nil {
+		if err := a.redis.Close(); err != nil {
+			slog.Warn("closing redis", "error", err)
+		}
 	}
 }
 
