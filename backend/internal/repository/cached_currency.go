@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
 )
 
-const currencyString = "currency:%s"
+const currencyKeyPrefix = "currency:%s"
 
 type CachedCurrencyRepository struct {
 	repo  CurrencyRepository
@@ -31,43 +32,84 @@ func NewCachedCurrencyRepository(repo CurrencyRepository, cache *redis.Client, t
 }
 
 func (c *CachedCurrencyRepository) Get(ctx context.Context, currency string) (*models.CurrencyResponse, error) {
-	key := fmt.Sprintf(currencyString, currency)
+	code := strings.ToUpper(strings.TrimSpace(currency))
+	key := fmt.Sprintf(currencyKeyPrefix, code)
 
 	val, err := c.cache.Get(ctx, key).Result()
-
 	if err == nil {
-		var currency models.CurrencyResponse
-		if err := json.Unmarshal([]byte(val), &currency); err == nil {
-			return &currency, nil
+		var cached models.CurrencyResponse
+		if unmarshalErr := json.Unmarshal([]byte(val), &cached); unmarshalErr == nil {
+			return &cached, nil
 		}
+		slog.Warn("Failed to unmarshal cached currency, falling back to DB", "key", key)
+	} else if !errors.Is(err, redis.Nil) {
+		slog.Warn("Redis GET error, falling back to DB", "key", key, "error", err)
 	}
 
-	if err != nil && !errors.Is(err, redis.Nil) {
-		slog.Info("Redis error for key ", "key", "error", key, err)
-	}
-
-	result, err, _ := c.group.Do(currency, func() (interface{}, error) {
+	res, err, _ := c.group.Do(key, func() (any, error) {
 		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		currency, err := c.repo.Get(dbCtx, currency)
-		if err != nil {
-			return nil, err
+		item, dbErr := c.repo.Get(dbCtx, code)
+		if dbErr != nil {
+			return nil, dbErr
+		}
+		if item == nil {
+			return nil, nil
 		}
 
-		data, _ := json.Marshal(currency)
-		c.cache.Set(context.Background(), key, data, c.ttl)
+		payload, marshalErr := json.Marshal(item)
+		if marshalErr != nil {
+			slog.Warn("Failed to marshal currency for cache", "key", key, "error", marshalErr)
+			return item, nil
+		}
 
-		return currency, nil
+		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cacheCancel()
+
+		if setErr := c.cache.Set(cacheCtx, key, payload, c.ttl).Err(); setErr != nil {
+			slog.Warn("Failed to write currency to Redis", "key", key, "error", setErr)
+		}
+
+		return item, nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
+	if res == nil {
+		return nil, nil
+	}
 
-	return result.(*models.CurrencyResponse), nil
+	return res.(*models.CurrencyResponse), nil
 }
 
 func (c *CachedCurrencyRepository) GetAll(ctx context.Context) ([]*models.CurrencyResponse, error) {
 	return c.repo.GetAll(ctx)
+}
+
+func (c *CachedCurrencyRepository) SaveAll(ctx context.Context, currencies []models.CurrencyResponse) error {
+	if err := c.repo.SaveAll(ctx, currencies); err != nil {
+		return err
+	}
+
+	for _, item := range currencies {
+		code := strings.ToUpper(strings.TrimSpace(item.Quote))
+		if code == "" {
+			continue
+		}
+		key := fmt.Sprintf(currencyKeyPrefix, code)
+
+		payload, err := json.Marshal(item)
+		if err != nil {
+			slog.Warn("Failed to marshal currency during cache sync", "key", key, "error", err)
+			continue
+		}
+
+		if err := c.cache.Set(ctx, key, payload, c.ttl).Err(); err != nil {
+			slog.Warn("Failed to update Redis key after SaveAll", "key", key, "error", err)
+		}
+	}
+
+	return nil
 }
