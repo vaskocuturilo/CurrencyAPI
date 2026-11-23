@@ -1,8 +1,10 @@
 name: Playwright UI/API tests 👔
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+  workflow_run:
+    workflows: [ "Golang CI - PR Validation" ]
+    types:
+      - completed
 
 jobs:
   test:
