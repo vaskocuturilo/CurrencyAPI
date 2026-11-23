@@ -2,7 +2,7 @@ name: Playwright UI/API tests 👔
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [ "Golang CI - PR Validation" ]
+    workflows: [ "Golang CI - PR Validation 👔" ]
     types:
       - completed
 
