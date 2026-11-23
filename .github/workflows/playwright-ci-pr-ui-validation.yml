@@ -7,8 +7,9 @@ on:
       - completed
 
 jobs:
-  test:
+  playwright:
     timeout-minutes: 60
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -17,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Checkout node
         uses: actions/setup-node@v6.0.0
