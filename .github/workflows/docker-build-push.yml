@@ -7,7 +7,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: currency-service
-  DOCKERFILE_PATH: ./Dockerfile
+  DOCKERFILE_PATH: ./backend/Dockerfile
   BUILD_CONTEXT: .
 
 jobs:
