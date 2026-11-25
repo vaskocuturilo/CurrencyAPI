@@ -31,7 +31,7 @@ Currency API is a free, open-source exchange rate API for 217 currencies from 4 
 
 ## Deployment
 
-The public API runs at https://api.******.dev. If you prefer to host your own instance, you can run the Currency API with Docker.
+The public API runs at https://api.openrates.dev/ If you prefer to host your own instance, you can run the Currency API with Docker.
 
 ## Using Docker
 
