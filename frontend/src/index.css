@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+:root {
+  --ink: #0f172a;
+  --paper: #fafaf9;
+  --brass: #0f766e;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
@@ -20,36 +27,18 @@
 
   --shadow-soft: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 10px -4px rgba(15, 23, 42, 0.04);
 
-  --animate-swap-a: swapA 4.5s ease-in-out infinite;
-  --animate-swap-b: swapB 4.5s ease-in-out infinite;
+  --animate-ticker: ticker 28s linear infinite;
 }
 
-@keyframes swapA {
-  0%, 38% {
-    opacity: 1;
-    transform: translateY(0);
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
   }
-  48%, 88% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  98%, 100% {
-    opacity: 1;
-    transform: translateY(0);
+  100% {
+    transform: translateX(-50%);
   }
 }
 
-@keyframes swapB {
-  0%, 38% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  48%, 88% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  98%, 100% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
+.animate-ticker:hover {
+  animation-play-state: paused;
 }

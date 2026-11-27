@@ -1,9 +1,29 @@
-import { ArrowRightLeft, Globe, Radar, Zap, ShieldCheck, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { ArrowRightLeft, ArrowDownUp, Globe, Radar, Zap, ShieldCheck, ChevronDown } from "lucide-react";
 
 const browsers = [
   { name: "Chrome", href: "#install" },
   { name: "Firefox", href: "#install" },
   { name: "Edge", href: "#install" },
+];
+
+const currencies = [
+  { symbol: "$", code: "USD" },
+  { symbol: "€", code: "EUR" },
+  { symbol: "£", code: "GBP" },
+  { symbol: "¥", code: "JPY" },
+  { symbol: "Fr", code: "CHF" },
+  { symbol: "$", code: "CAD" },
+  { symbol: "$", code: "AUD" },
+  { symbol: "¥", code: "CNY" },
+  { symbol: "₹", code: "INR" },
+  { symbol: "R$", code: "BRL" },
+  { symbol: "$", code: "MXN" },
+  { symbol: "₩", code: "KRW" },
+  { symbol: "kr", code: "SEK" },
+  { symbol: "zł", code: "PLN" },
+  { symbol: "₺", code: "TRY" },
+  { symbol: "R", code: "ZAR" },
 ];
 
 const features = [
@@ -72,6 +92,101 @@ function InstallButtons() {
   );
 }
 
+function CurrencyTicker() {
+  const repeated = [...currencies, ...currencies];
+  return (
+    <div className="overflow-hidden border-y border-[var(--ink)]/10 py-4" aria-hidden="true">
+      <div
+        className="animate-ticker flex w-max gap-10 whitespace-nowrap text-sm"
+        style={{ fontFamily: "var(--font-mono)" }}
+      >
+        {repeated.map((c, idx) => (
+          <span key={`${c.code}-${idx}`} className="flex items-center gap-2">
+            <span className="font-semibold text-[var(--brass)]">{c.symbol}</span>
+            <span className="tracking-widest">{c.code}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroPreviewCard() {
+  const [swapped, setSwapped] = useState(false);
+
+  return (
+    <div
+      className="relative rounded-[1.75rem] p-7 shadow-[0_30px_60px_-30px_rgba(20,33,28,0.5)]"
+      style={{ background: "var(--ink)", color: "var(--paper)" }}
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className="text-xs uppercase tracking-[0.2em] text-[var(--paper)]/50"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          Preview
+        </span>
+        <span className="flex gap-1.5" aria-hidden="true">
+          <span className="size-2 rounded-full bg-[var(--paper)]/20" />
+          <span className="size-2 rounded-full bg-[var(--paper)]/20" />
+          <span className="size-2 rounded-full bg-[var(--brass)]" />
+        </span>
+      </div>
+
+      <div className="mt-5 rounded-2xl bg-[var(--paper)]/[0.06] px-5 py-4">
+        <div className="text-xs text-[var(--paper)]/50">You send</div>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <span
+            className="text-3xl font-medium tabular-nums"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            100.00
+          </span>
+          <span
+            className="rounded-full bg-[var(--paper)] px-3 py-1 text-sm font-semibold tracking-widest text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {swapped ? "EUR" : "USD"}
+          </span>
+        </div>
+      </div>
+
+      <div className="relative my-1 flex justify-center">
+        <div className="absolute inset-x-0 top-1/2 h-px bg-[var(--paper)]/10" />
+        <button
+          type="button"
+          aria-label="Swap currencies"
+          onClick={() => setSwapped((prev) => !prev)}
+          className="relative grid size-11 cursor-pointer place-items-center rounded-full bg-[var(--brass)] text-[var(--ink)] transition-transform duration-500 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper)]"
+          style={{ transform: swapped ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <ArrowDownUp className="size-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="mt-5 rounded-2xl bg-[var(--paper)]/[0.06] px-5 py-4">
+        <div className="text-xs text-[var(--paper)]/50">They receive</div>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <span
+            className="text-3xl font-medium tabular-nums text-[var(--paper)]/40"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            —
+          </span>
+          <span
+            className="rounded-full bg-[var(--paper)] px-3 py-1 text-sm font-semibold tracking-widest text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {swapped ? "USD" : "EUR"}
+          </span>
+        </div>
+      </div>
+      
+      <CurrencyTicker />
+    </div>
+  );
+}
+
 export function App() {
   return (
     <div className="min-h-screen font-sans">
@@ -121,35 +236,9 @@ export function App() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-5 shadow-soft">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex gap-1.5">
-                <span className="h-3 w-3 rounded-full bg-slate-200" />
-                <span className="h-3 w-3 rounded-full bg-slate-200" />
-                <span className="h-3 w-3 rounded-full bg-slate-200" />
-              </div>
-              <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
-                Auto-converted in place
-              </span>
-            </div>
-            <div className="rounded-2xl bg-muted p-6">
-              <div className="mb-4 flex h-36 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
-                <div className="text-center">
-                  <div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-card shadow-xs">
-                    <ArrowRightLeft size={18} className="text-primary" />
-                  </div>
-                  <span className="text-xs font-medium">store.example.com/headphones</span>
-                </div>
-              </div>
-              <p className="font-display text-lg font-semibold">Wireless Noise-Cancelling Headphones</p>
-              <div className="relative mt-2 h-10 font-display text-3xl font-bold">
-                <span className="animate-swap-a absolute">$49.99</span>
-                <span className="animate-swap-b absolute text-primary">€46.20</span>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">Live rate · 1 USD = 0.924 EUR</p>
-            </div>
-          </div>
+          <HeroPreviewCard />
         </section>
+
 
         <section id="features" className="mx-auto max-w-6xl px-6 py-16">
           <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
